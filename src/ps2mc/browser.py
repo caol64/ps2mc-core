@@ -18,8 +18,9 @@ class Browser:
         Parameters:
         - file_path (str): The path to the PS2 memory card file.
         """
-        self.file = open(file_path, "rb")
-        self.ps2mc = Ps2mc(self.file)
+        self.file_path = file_path
+        self.file = None
+        self.ps2mc = None
 
     def list_root_dir(self) -> list[Entry]:
         """
@@ -117,8 +118,17 @@ class Browser:
         icons = [Icon(self.ps2mc.read_data_cluster(icon_entry)) for icon_entry in icon_entries]
         return icon_sys, icons
 
+    def open(self):
+        self.file = open(self.file_path, "r+b")
+        self.ps2mc = Ps2mc(self.file)
+
     def close(self):
-        """
-        Destroy the Ps2mc instance associated with the Browser.
-        """
-        self.file.close()
+        if self.file:
+            self.file.close()
+
+    def __enter__(self):
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

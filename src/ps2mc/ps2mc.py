@@ -3,6 +3,7 @@ import struct
 
 from . import utils
 from .error import Error
+from .ecc import EccCalculator
 
 
 class Ps2mc:
@@ -32,6 +33,7 @@ class Ps2mc:
         self.fat_matrix = self.__build_fat_matrix()
         self.root_entry = self.get_root_entry()
         self.entries_in_root = self.find_sub_entries(self.root_entry)
+        self.ecc_calculator = EccCalculator()
 
     def read_page(self, n: int) -> bytes:
         """
@@ -151,12 +153,10 @@ class Ps2mc:
         Returns:
             List[List[int]]: Matrix representation of the cluster values.
         """
-        # 初始化二维列表矩阵
         matrix = [[0 for _ in range(self.fat_per_cluster)] for _ in range(len(cluster_list))]
 
         for index, v in enumerate(cluster_list):
-            cluster_value = self.read_cluster(v)  # 应该返回 bytes 或 bytearray
-            # 每个 cluster_value 应该包含 fat_per_cluster 个 uint32（4 字节）元素
+            cluster_value = self.read_cluster(v)
             cluster_value_unpacked = struct.unpack(f"<{self.fat_per_cluster}I", cluster_value)
             for index0, v0 in enumerate(cluster_value_unpacked):
                 matrix[index][index0] = v0
@@ -179,6 +179,37 @@ class Ps2mc:
     def flatten_matrix(self, matrix: list[list[int]]) -> list[int]:
         return [item for row in matrix for item in row]
 
+    def write_bytes(self, data: bytes, offset: int):
+        self.file.seek(offset)
+        return self.file.write(data)
+
+    def write_page(self, n: int, data: bytes):
+        end = min(self.page_size, len(data))
+        offset = self.raw_page_size * n
+        self.write_bytes(data[:end], offset)
+        if self.spare_size != 0:
+            ecc_bytes = bytearray()
+            for i in range(self.page_size // 128):
+                self.file.seek(offset + i * 128)
+                ecc_bytes.extend(self.ecc_calculator.calc(self.file.read(128)))
+            ecc_bytes.extend(b"\0" * (self.spare_size - len(ecc_bytes)))
+            offset += self.page_size
+            self.write_bytes(ecc_bytes, offset)
+
+    def write_cluster(self, n: int, data: bytes):
+        page_index = n * self.pages_per_cluster
+        for i in range(self.pages_per_cluster):
+            start = i * self.page_size
+            self.write_page(page_index + i, data[start:])
+
+    def write_data_cluster(self, entry: 'Entry', data: bytes):
+        chain_start = entry.cluster
+        bytes_write = 0
+        while chain_start != Fat.CHAIN_END:
+            to_write = min(entry.length - bytes_write, self.cluster_size)
+            self.write_cluster(chain_start + self.alloc_offset, data[bytes_write: bytes_write + to_write])
+            bytes_write += to_write
+            chain_start = self.get_fat_value(chain_start)
 
 class SuperBlock:
     """
