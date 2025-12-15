@@ -1,4 +1,17 @@
 # ps2mc
+
+⚠️ **Maintenance Status Notice**
+
+> **This repository is no longer actively maintained and has been archived (read-only).**
+> No new features or enhancements will be added here.
+
+All **new development and ongoing maintenance** have been moved to the **ps2mc-browser** project, specifically the core library located at:
+
+👉 **ps2mc-core (actively maintained)**
+[https://github.com/caol64/ps2mc-browser/tree/main/packages/ps2mc-core](https://github.com/caol64/ps2mc-browser/tree/main/packages/ps2mc-core)
+
+---
+
 A Python library for working with PlayStation 2 memory card files.
 
 ## Installation
@@ -34,19 +47,24 @@ class MemcardReader(Ps2mc):
                         save_head_entry = self.read_data_cluster(sub_entry)
                     if sub_entry.name == 'icon.sys':
                         sys_icon_entry = self.read_data_cluster(sub_entry)
-            save_entries.append(Saka04SaveEntry(entry.name, main_save_entry, save_head_entry, sys_icon_entry))
+            save_entries.append(
+                Saka04SaveEntry(entry.name, main_save_entry, save_head_entry, sys_icon_entry)
+            )
         return save_entries
 ```
 
 ## Documentation
-- [Analyze the file system of the PS2 memory card](https://babyno.top/en/posts/2023/09/parsing-ps2-memcard-file-system/)
-- [Export save files from the PS2 memory card](https://babyno.top/en/posts/2023/09/exporting-file-from-ps2-memcard/)
+
+* [Analyze the file system of the PS2 memory card](https://babyno.top/en/posts/2023/09/parsing-ps2-memcard-file-system/)
+* [Export save files from the PS2 memory card](https://babyno.top/en/posts/2023/09/exporting-file-from-ps2-memcard/)
 
 ## Reference
-- [gothi - icon.sys format](https://www.ps2savetools.com/documents/iconsys-format/)
-- [Martin Akesson - PS2 Icon Format v0.5](http://www.csclub.uwaterloo.ca:11068/mymc/ps2icon-0.5.pdf)
-- [Florian Märkl - mymcplus](https://git.sr.ht/~thestr4ng3r/mymcplus)
-- [Ross Ridge - PlayStation 2 Memory Card File System](https://www.ps2savetools.com/ps2memcardformat.html)
+
+* [gothi - icon.sys format](https://www.ps2savetools.com/documents/iconsys-format/)
+* [Martin Akesson - PS2 Icon Format v0.5](http://www.csclub.uwaterloo.ca:11068/mymc/ps2icon-0.5.pdf)
+* [Florian Märkl - mymcplus](https://git.sr.ht/~thestr4ng3r/mymcplus)
+* [Ross Ridge - PlayStation 2 Memory Card File System](https://www.ps2savetools.com/ps2memcardformat.html)
 
 ## License
+
 MIT License
